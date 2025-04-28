@@ -25,6 +25,7 @@ h1 {
   border: 1px solid #ddd;
   border-radius: 4px;
   padding: 10px;
+  padding-top: 24px;
   margin-bottom: 10px;
   position: relative;
 }
@@ -60,7 +61,7 @@ h1 {
   border: none;
   color: #999;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 12px;
   padding: 0 5px;
 }
 

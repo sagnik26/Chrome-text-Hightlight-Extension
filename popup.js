@@ -52,7 +52,7 @@ function createHighlightElement(highlight) {
 
   const deleteButton = document.createElement("button");
   deleteButton.className = "delete-button";
-  deleteButton.innerHTML = "×";
+  deleteButton.textContent = "Remove";
   deleteButton.addEventListener("click", () => deleteHighlight(highlight.id));
 
   div.appendChild(text);
@@ -70,6 +70,20 @@ function deleteHighlight(highlightId) {
 
     chrome.storage.local.set({ highlights }, () => {
       loadHighlights();
+
+      // Send message to all tabs to remove this highlight
+      chrome.tabs.query({}, function (tabs) {
+        tabs.forEach((tab) => {
+          chrome.tabs
+            .sendMessage(tab.id, {
+              action: "deleteHighlight",
+              highlightId: highlightId,
+            })
+            .catch(() => {
+              // Ignore errors if some tabs can't receive the message
+            });
+        });
+      });
     });
   });
 }

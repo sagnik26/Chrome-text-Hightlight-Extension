@@ -2,6 +2,7 @@ console.log("Content script loaded!"); // Debug log
 
 // Listen for text selection
 document.addEventListener("mouseup", (event) => {
+  console.log("Mouseup event fired!");
   // Small delay to ensure selection is complete
   setTimeout(() => {
     const selectedText = window.getSelection().toString().trim();
@@ -17,16 +18,20 @@ document.addEventListener("mouseup", (event) => {
 
 // Listen for messages from popup about deleted highlights
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "highlightDeleted") {
+  console.log("Message received in content script:", request);
+
+  if (request.action === "deleteHighlight") {
     const highlightElements = document.querySelectorAll(
       `.highlighted-text[data-id="${request.highlightId}"]`
     );
+    console.log(`Found ${highlightElements.length} elements to delete`);
+
     highlightElements.forEach((element) => {
+      // Replace the span with its contents
       const parent = element.parentNode;
-      while (element.firstChild) {
-        parent.insertBefore(element.firstChild, element);
-      }
-      parent.removeChild(element);
+      const text = element.textContent;
+      const textNode = document.createTextNode(text);
+      parent.replaceChild(textNode, element);
     });
   }
 });
@@ -74,10 +79,21 @@ function saveHighlight(text) {
     const highlights = result.highlights || [];
     highlights.push(highlight);
     chrome.storage.local.set({ highlights }, () => {
-      console.log("Highlight saved:", highlight); // Debug log
+      console.log("Highlight saved:", highlight);
       // Add visual feedback
-      showSavedNotification();
-      applyHighlight(text);
+
+      // Apply highlight to the current selection
+      const range = window.getSelection().getRangeAt(0);
+      const span = document.createElement("span");
+      span.className = "highlighted-text";
+      span.dataset.id = highlight.id; // Store the ID on the span
+
+      try {
+        range.surroundContents(span);
+        loadHighlights();
+      } catch (e) {
+        console.error("Couldn't apply highlight:", e);
+      }
     });
   });
 }
@@ -90,7 +106,14 @@ function showSavedNotification() {
   document.body.appendChild(notification);
 
   setTimeout(() => {
-    notification.remove();
+    notification.style.opacity = "0";
+
+    // After transition is complete, remove from DOM
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 300); // Wait for fade transition
   }, 2000);
 }
 
