@@ -70,10 +70,15 @@ function displayCurrentUrlSection(highlights, url) {
   // Sort highlights by date (newest first)
   highlights.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
+  const currPageHeader = document.createElement("h3");
+  currPageHeader.className = "other-pages-header";
+  currPageHeader.textContent = "Current Page";
+
   // Add header for current URL
   const urlHeader = document.createElement("div");
   urlHeader.className = "url-header current-url";
-  urlHeader.textContent = "Current Page: " + formatUrl(url);
+  urlHeader.textContent = formatUrl(url);
+  highlightsList.appendChild(currPageHeader);
   highlightsList.appendChild(urlHeader);
 
   // Add each highlight
@@ -120,7 +125,7 @@ function displayOtherUrlSections(highlightsByUrl, currentUrl) {
     // Add URL header
     const urlHeader = document.createElement("div");
     urlHeader.className = "url-header other-url";
-    urlHeader.textContent = formatUrl(url) + ` (${urlHighlights.length})`;
+    urlHeader.textContent = formatUrl(url);
 
     // Make URL clickable
     urlHeader.addEventListener("click", () => {
@@ -205,17 +210,43 @@ function deleteHighlight(highlightId) {
   });
 }
 
-// Format URL for display
 function formatUrl(url) {
   try {
     const urlObj = new URL(url);
     const host = urlObj.hostname;
-    const path = urlObj.pathname;
+    let path = urlObj.pathname;
 
-    // Limit path length
-    const displayPath = path.length > 15 ? path.substring(0, 15) + "..." : path;
-    return host + displayPath;
+    // Limit path length more aggressively
+    if (path.length > 10) {
+      path = path.substring(0, 10) + "...";
+    }
+
+    // For very long hostnames, truncate them too
+    let displayHost = host;
+    if (host.length > 20) {
+      // Keep the domain but truncate subdomains
+      const parts = host.split(".");
+      if (parts.length > 2) {
+        // For subdomains, shorten them
+        displayHost =
+          parts
+            .slice(0, 1)
+            .map((p) => p.substring(0, 3) + "...")
+            .join(".") +
+          "." +
+          parts.slice(-2).join(".");
+      } else {
+        // Just truncate if it's a long domain
+        displayHost = host.substring(0, 20) + "...";
+      }
+    }
+
+    return displayHost + path;
   } catch (e) {
+    // For invalid URLs, just return a short version
+    if (url.length > 30) {
+      return url.substring(0, 27) + "...";
+    }
     return url;
   }
 }
