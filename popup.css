@@ -74,3 +74,78 @@ h1 {
   text-align: center;
   padding: 20px;
 }
+
+/* Styling for URL headers */
+.url-header {
+  background-color: #f0f0f0;
+  padding: 8px 12px;
+  margin: 10px 0 5px 0;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Current URL styling */
+.url-header.current-url {
+  background-color: #e8f5e9;
+  border-left: 4px solid #4caf50;
+}
+
+/* Style for URLs from other pages */
+.url-header.other-url {
+  background-color: #e3f2fd;
+  cursor: pointer;
+  border-left: 4px solid #2196f3;
+}
+
+.url-header.other-url:hover {
+  background-color: #bbdefb;
+}
+
+/* URL section styling */
+.url-section {
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Show more link */
+.show-more-link {
+  color: #2196f3;
+  text-align: center;
+  padding: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  margin-top: 5px;
+}
+
+.show-more-link:hover {
+  text-decoration: underline;
+}
+
+/* Other pages header */
+.other-pages-header {
+  font-size: 16px;
+  color: #666;
+  margin: 15px 0 10px 0;
+  font-weight: normal;
+}
+
+/* Separator */
+hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 15px 0;
+}
+
+/* Empty page message */
+.current-page-message {
+  background-color: #f5f5f5;
+  padding: 12px;
+  border-radius: 4px;
+  color: #666;
+  text-align: center;
+  margin: 10px 0;
+  font-style: italic;
+}

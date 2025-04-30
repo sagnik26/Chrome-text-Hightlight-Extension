@@ -176,6 +176,8 @@ function loadHighlights() {
     const highlights = result.highlights || [];
     const currentUrl = window.location.href;
 
+    console.log("HHHH", highlights);
+
     // Filter highlights for the current page
     const pageHighlights = highlights.filter((h) => h.url === currentUrl);
 
