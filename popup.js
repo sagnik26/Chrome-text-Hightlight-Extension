@@ -2,6 +2,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   loadHighlightsByUrl();
   setupColorSelector();
+  setupSearch();
 
   // Listen for storage changes
   chrome.storage.onChanged.addListener((changes, namespace) => {
@@ -33,6 +34,88 @@ function setupColorSelector() {
       element.style.backgroundColor = selectedColor;
     });
   });
+}
+
+// Setup search functionality
+function setupSearch() {
+  const searchInput = document.getElementById("search-input");
+  searchInput.addEventListener("input", (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    filterHighlights(searchTerm);
+  });
+}
+
+// Filter highlights based on search term
+function filterHighlights(searchTerm) {
+  const urlSections = document.querySelectorAll(".url-section");
+  const urlHeaders = document.querySelectorAll(".url-header");
+  const highlightItems = document.querySelectorAll(".highlight-item");
+  const currentPageHeader = document.querySelector(".url-header.current-url");
+  const currentPageHighlights = document.querySelectorAll(
+    ".highlight-item:not(.url-section .highlight-item)"
+  );
+  let hasVisibleHighlights = false;
+
+  // First hide all sections and headers
+  urlSections.forEach((section) => (section.style.display = "none"));
+  urlHeaders.forEach((header) => (header.style.display = "none"));
+  highlightItems.forEach((item) => (item.style.display = "none"));
+
+  // If search term is empty, show everything
+  if (!searchTerm) {
+    urlSections.forEach((section) => (section.style.display = ""));
+    urlHeaders.forEach((header) => (header.style.display = ""));
+    highlightItems.forEach((item) => (item.style.display = ""));
+    return;
+  }
+
+  // Check current page URL
+  if (currentPageHeader) {
+    const currentUrlText = currentPageHeader.textContent.toLowerCase();
+    if (currentUrlText.includes(searchTerm)) {
+      hasVisibleHighlights = true;
+      currentPageHeader.style.display = "";
+      currentPageHighlights.forEach(
+        (highlight) => (highlight.style.display = "")
+      );
+    }
+  }
+
+  // Check other URL sections
+  urlHeaders.forEach((header) => {
+    if (header.classList.contains("current-url")) return; // Skip current page header as it's already handled
+
+    const urlText = header.textContent.toLowerCase();
+    if (urlText.includes(searchTerm)) {
+      hasVisibleHighlights = true;
+      header.style.display = "";
+
+      // Show the parent URL section
+      const urlSection = header.closest(".url-section");
+      if (urlSection) {
+        urlSection.style.display = "";
+
+        // Show all highlights in this section
+        const sectionHighlights =
+          urlSection.querySelectorAll(".highlight-item");
+        sectionHighlights.forEach(
+          (highlight) => (highlight.style.display = "")
+        );
+      }
+    }
+  });
+
+  // Show/hide "no highlights" message
+  const noHighlights = document.getElementById("no-highlights");
+  if (noHighlights) {
+    noHighlights.style.display = hasVisibleHighlights ? "none" : "";
+  }
+
+  // Show/hide "no highlights on this page" message
+  const currentPageMessage = document.querySelector(".current-page-message");
+  if (currentPageMessage) {
+    currentPageMessage.style.display = hasVisibleHighlights ? "none" : "";
+  }
 }
 
 // Load highlights and group them by URL
@@ -84,6 +167,12 @@ function loadHighlightsByUrl() {
 
       // Always display other URL sections
       displayOtherUrlSections(highlightsByUrl, currentUrl);
+
+      // Apply any existing search filter
+      const searchInput = document.getElementById("search-input");
+      if (searchInput && searchInput.value) {
+        filterHighlights(searchInput.value.toLowerCase());
+      }
     });
   });
 }

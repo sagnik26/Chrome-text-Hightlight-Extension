@@ -27,6 +27,7 @@ h1 {
   padding: 10px;
   padding-top: 24px;
   margin-bottom: 10px;
+  margin-right: 5px;
   position: relative;
 }
 
@@ -119,6 +120,7 @@ h1 {
   text-overflow: ellipsis;
   max-width: 100%;
   box-sizing: border-box;
+  margin-right: 5px;
 }
 
 /* Current URL styling */
@@ -217,3 +219,48 @@ hr {
   border-color: #4caf50;
   box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
 } */
+
+/* Controls container */
+.controls {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  align-items: center;
+}
+
+/* Search box styles */
+.search-box {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.search-box input {
+  width: 89%;
+  padding: 8px 12px;
+  padding-left: 35px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+  background-color: white;
+  transition: all 0.2s ease;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.search-box input::placeholder {
+  color: #999;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  pointer-events: none;
+}
