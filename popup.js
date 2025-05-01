@@ -1,6 +1,7 @@
 // popup.js
 document.addEventListener("DOMContentLoaded", () => {
   loadHighlightsByUrl();
+  setupColorSelector();
 
   // Listen for storage changes
   chrome.storage.onChanged.addListener((changes, namespace) => {
@@ -9,6 +10,30 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+// Setup color selector
+function setupColorSelector() {
+  const colorSelector = document.getElementById("highlight-color");
+
+  // Load saved color preference
+  chrome.storage.local.get(["highlightColor"], (result) => {
+    if (result.highlightColor) {
+      colorSelector.value = result.highlightColor;
+    }
+  });
+
+  // Save color preference when changed
+  colorSelector.addEventListener("change", (e) => {
+    const selectedColor = e.target.value;
+    chrome.storage.local.set({ highlightColor: selectedColor });
+
+    // Update all highlight elements with new color
+    const highlightElements = document.querySelectorAll(".highlight-text");
+    highlightElements.forEach((element) => {
+      element.style.backgroundColor = selectedColor;
+    });
+  });
+}
 
 // Load highlights and group them by URL
 function loadHighlightsByUrl() {
@@ -168,18 +193,50 @@ function createHighlightElement(highlight) {
   text.className = "highlight-text";
   text.textContent = highlight.text;
 
+  // Apply saved color preference
+  chrome.storage.local.get(["highlightColor"], (result) => {
+    if (result.highlightColor) {
+      text.style.backgroundColor = result.highlightColor;
+    }
+  });
+
   const timestamp = document.createElement("div");
   timestamp.className = "highlight-date";
   timestamp.textContent = formatDate(highlight.timestamp);
 
+  const buttonContainer = document.createElement("div");
+  buttonContainer.className = "highlight-buttons";
+
+  const copyButton = document.createElement("button");
+  copyButton.className = "copy-button";
+  copyButton.innerHTML =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+  copyButton.addEventListener("click", () => {
+    navigator.clipboard.writeText(highlight.text).then(() => {
+      // Show copied feedback
+      copyButton.classList.add("copied");
+      copyButton.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      setTimeout(() => {
+        copyButton.classList.remove("copied");
+        copyButton.innerHTML =
+          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+      }, 1000);
+    });
+  });
+
   const deleteButton = document.createElement("button");
   deleteButton.className = "delete-button";
-  deleteButton.textContent = "Remove";
+  deleteButton.innerHTML =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
   deleteButton.addEventListener("click", () => deleteHighlight(highlight.id));
+
+  buttonContainer.appendChild(copyButton);
+  buttonContainer.appendChild(deleteButton);
 
   div.appendChild(text);
   div.appendChild(timestamp);
-  div.appendChild(deleteButton);
+  div.appendChild(buttonContainer);
 
   return div;
 }
@@ -217,13 +274,13 @@ function formatUrl(url) {
     let path = urlObj.pathname;
 
     // Limit path length more aggressively
-    if (path.length > 10) {
-      path = path.substring(0, 10) + "...";
+    if (path.length > 20) {
+      path = path.substring(0, 20) + "...";
     }
 
     // For very long hostnames, truncate them too
     let displayHost = host;
-    if (host.length > 20) {
+    if (host.length > 40) {
       // Keep the domain but truncate subdomains
       const parts = host.split(".");
       if (parts.length > 2) {
@@ -237,7 +294,7 @@ function formatUrl(url) {
           parts.slice(-2).join(".");
       } else {
         // Just truncate if it's a long domain
-        displayHost = host.substring(0, 20) + "...";
+        displayHost = host.substring(0, 40) + "...";
       }
     }
 

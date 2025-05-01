@@ -1,5 +1,5 @@
 body {
-  width: 350px;
+  width: 650px;
   margin: 0;
   padding: 0;
   font-family: Arial, sans-serif;
@@ -34,6 +34,7 @@ h1 {
   color: #333;
   font-size: 14px;
   margin-bottom: 5px;
+  margin-top: 3px;
   background-color: #ffeb3b;
   padding: 2px 4px;
   border-radius: 2px;
@@ -53,20 +54,46 @@ h1 {
   color: #999;
 }
 
-.delete-button {
+/* Highlight buttons container */
+.highlight-buttons {
   position: absolute;
-  top: 5px;
+  top: 1px;
   right: 5px;
+  display: flex;
+  gap: 5px;
+}
+
+/* Copy and Delete buttons */
+.copy-button,
+.delete-button {
   background: none;
   border: none;
-  color: #999;
+  color: #504d4d;
   cursor: pointer;
-  font-size: 12px;
-  padding: 0 5px;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.copy-button:hover,
+.delete-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.copy-button:hover {
+  color: #4caf50;
 }
 
 .delete-button:hover {
   color: #f44336;
+}
+
+.copy-button.copied {
+  color: #4caf50;
+  background-color: rgba(76, 175, 80, 0.1);
 }
 
 #no-highlights {
@@ -157,3 +184,36 @@ hr {
   margin: 10px 0;
   font-style: italic;
 }
+
+/* Color selector styles */
+.color-selector {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-selector label {
+  font-size: 14px;
+  color: #666;
+}
+
+.color-selector select {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+}
+
+.color-selector select:hover {
+  border-color: #999;
+}
+
+/* .color-selector select:focus {
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+} */

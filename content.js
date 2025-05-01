@@ -68,29 +68,35 @@ function removeHighlightButton() {
 
 // Save highlight to storage
 function saveHighlight(text) {
-  const highlight = {
-    text: text,
-    url: window.location.href,
-    timestamp: new Date().toISOString(),
-    id: Date.now().toString(),
-  };
+  // Get the current highlight color
+  chrome.storage.local.get(["highlightColor"], (colorResult) => {
+    const highlightColor = colorResult.highlightColor || "#ffeb3b"; // Default to yellow if no color set
 
-  // save to storage
-  chrome.storage.local.get(["highlights"], (result) => {
-    const highlights = result.highlights || [];
-    const isHighlightExist = highlights.find(
-      (h) => h.text === text && h.url === window.location.href
-    );
-    if (isHighlightExist) {
-      showNotification("Already Exists!");
-      return;
-    }
+    const highlight = {
+      text: text,
+      url: window.location.href,
+      timestamp: new Date().toISOString(),
+      id: Date.now().toString(),
+      color: highlightColor,
+    };
 
-    highlights.push(highlight);
-    chrome.storage.local.set({ highlights }, () => {
-      console.log("Highlight saved:", highlight);
-      // Only show notification after storage is updated
-      showNotification("Highlight saved!");
+    // save to storage
+    chrome.storage.local.get(["highlights"], (result) => {
+      const highlights = result.highlights || [];
+      const isHighlightExist = highlights.find(
+        (h) => h.text === text && h.url === window.location.href
+      );
+      if (isHighlightExist) {
+        showNotification("Already Exists!");
+        return;
+      }
+
+      highlights.push(highlight);
+      chrome.storage.local.set({ highlights }, () => {
+        console.log("Highlight saved:", highlight);
+        // Only show notification after storage is updated
+        showNotification("Highlight saved!");
+      });
     });
   });
 }
@@ -114,7 +120,6 @@ function showNotification(text) {
   }, 2000);
 }
 
-// Completely revamped loadHighlights function for better multi-line support
 function loadHighlights() {
   chrome.storage.local.get(["highlights"], (result) => {
     const highlights = result.highlights || [];
