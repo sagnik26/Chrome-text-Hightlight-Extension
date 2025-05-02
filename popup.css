@@ -324,3 +324,21 @@ hr {
   color: #999;
   pointer-events: none;
 }
+
+.navigate-button {
+  background: none;
+  border: none;
+  color: #2196f3;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.navigate-button:hover {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: #1976d2;
+}

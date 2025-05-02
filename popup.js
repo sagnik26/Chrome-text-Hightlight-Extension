@@ -323,6 +323,28 @@ function createHighlightElement(highlight) {
     '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
   deleteButton.addEventListener("click", () => deleteHighlight(highlight.id));
 
+  // Only add navigation button for current page highlights
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0] && tabs[0].url === highlight.url) {
+      const navigateButton = document.createElement("button");
+      navigateButton.className = "navigate-button";
+      navigateButton.innerText = "Navigate";
+      navigateButton.title = "Navigate to highlight";
+      navigateButton.addEventListener("click", () => {
+        console.log("Sending scroll message for highlight:", highlight);
+        chrome.tabs
+          .sendMessage(tabs[0].id, {
+            action: "scrollToHighlight",
+            highlightText: highlight.text,
+          })
+          .catch((error) => {
+            console.error("Error sending message:", error);
+          });
+      });
+      buttonContainer.appendChild(navigateButton);
+    }
+  });
+
   buttonContainer.appendChild(copyButton);
   buttonContainer.appendChild(deleteButton);
 

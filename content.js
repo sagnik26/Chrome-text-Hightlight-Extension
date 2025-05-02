@@ -36,6 +36,72 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+// Listen for messages from popup
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log("Received message:", message);
+
+  if (message.action === "scrollToHighlight") {
+    console.log("Looking for text:", message.highlightText);
+
+    // Create a range to find the text
+    const range = document.createRange();
+    const selection = window.getSelection();
+
+    // Split the text into lines and try to find the best match
+    const lines = message.highlightText
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    let bestMatch = null;
+    let bestMatchLength = 0;
+
+    // Search through all text nodes
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    );
+
+    let node;
+    while ((node = walker.nextNode())) {
+      const nodeText = node.textContent;
+
+      // Try to find the best matching line
+      for (const line of lines) {
+        const index = nodeText.indexOf(line);
+        if (index !== -1 && line.length > bestMatchLength) {
+          bestMatch = { node, index, length: line.length };
+          bestMatchLength = line.length;
+        }
+      }
+    }
+
+    if (bestMatch) {
+      console.log("Found best match:", bestMatch);
+      range.setStart(bestMatch.node, bestMatch.index);
+      range.setEnd(bestMatch.node, bestMatch.index + bestMatch.length);
+
+      // Scroll the range into view
+      range.getBoundingClientRect();
+      bestMatch.node.parentElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center",
+      });
+
+      // Briefly highlight the text
+      selection.removeAllRanges();
+      selection.addRange(range);
+      setTimeout(() => {
+        selection.removeAllRanges();
+      }, 1000);
+    }
+
+    sendResponse({ success: true });
+  }
+});
+
 // Show highlight button
 function showHighlightButton(x, y, selectedText) {
   removeHighlightButton(); // Remove any existing button
