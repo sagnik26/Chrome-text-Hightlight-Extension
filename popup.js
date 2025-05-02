@@ -192,6 +192,8 @@ function displayCurrentUrlSection(highlights, url) {
   const urlHeader = document.createElement("div");
   urlHeader.className = "url-header current-url";
   urlHeader.textContent = formatUrl(url);
+  urlHeader.title = url; // Add title attribute for tooltip
+
   highlightsList.appendChild(currPageHeader);
   highlightsList.appendChild(urlHeader);
 
@@ -240,6 +242,7 @@ function displayOtherUrlSections(highlightsByUrl, currentUrl) {
     const urlHeader = document.createElement("div");
     urlHeader.className = "url-header other-url";
     urlHeader.textContent = formatUrl(url);
+    urlHeader.title = url; // Add title attribute for tooltip
 
     // Make URL clickable
     urlHeader.addEventListener("click", () => {

@@ -121,6 +121,66 @@ h1 {
   max-width: 100%;
   box-sizing: border-box;
   margin-right: 5px;
+  position: relative;
+  cursor: pointer;
+}
+
+/* Style the native tooltip */
+.url-header[title] {
+  position: relative;
+}
+
+/* Hide the default browser tooltip */
+.url-header[title] {
+  text-decoration: none;
+}
+
+/* Custom tooltip */
+.url-header[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  background-color: #333;
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: normal;
+  max-width: 400px;
+  z-index: 1000;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: opacity 0.1s ease;
+  opacity: 1;
+  pointer-events: none;
+}
+
+/* Tooltip arrow */
+.url-header[title]:hover::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% - 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* Ensure tooltip appears instantly */
+.url-header[title]::after,
+.url-header[title]::before {
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.url-header[title]:hover::after,
+.url-header[title]:hover::before {
+  opacity: 1;
 }
 
 /* Current URL styling */
