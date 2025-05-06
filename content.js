@@ -36,6 +36,72 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+// Listen for messages from popup
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log("Received message:", message);
+
+  if (message.action === "scrollToHighlight") {
+    console.log("Looking for text:", message.highlightText);
+
+    // Create a range to find the text
+    const range = document.createRange();
+    const selection = window.getSelection();
+
+    // Split the text into lines and try to find the best match
+    const lines = message.highlightText
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    let bestMatch = null;
+    let bestMatchLength = 0;
+
+    // Search through all text nodes
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    );
+
+    let node;
+    while ((node = walker.nextNode())) {
+      const nodeText = node.textContent;
+
+      // Try to find the best matching line
+      for (const line of lines) {
+        const index = nodeText.indexOf(line);
+        if (index !== -1 && line.length > bestMatchLength) {
+          bestMatch = { node, index, length: line.length };
+          bestMatchLength = line.length;
+        }
+      }
+    }
+
+    if (bestMatch) {
+      console.log("Found best match:", bestMatch);
+      range.setStart(bestMatch.node, bestMatch.index);
+      range.setEnd(bestMatch.node, bestMatch.index + bestMatch.length);
+
+      // Scroll the range into view
+      range.getBoundingClientRect();
+      bestMatch.node.parentElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center",
+      });
+
+      // Briefly highlight the text
+      selection.removeAllRanges();
+      selection.addRange(range);
+      setTimeout(() => {
+        selection.removeAllRanges();
+      }, 1000);
+    }
+
+    sendResponse({ success: true });
+  }
+});
+
 // Show highlight button
 function showHighlightButton(x, y, selectedText) {
   removeHighlightButton(); // Remove any existing button
@@ -68,41 +134,44 @@ function removeHighlightButton() {
 
 // Save highlight to storage
 function saveHighlight(text) {
-  const highlight = {
-    text: text,
-    url: window.location.href,
-    timestamp: new Date().toISOString(),
-    id: Date.now().toString(),
-  };
+  // Get the current highlight color
+  chrome.storage.local.get(["highlightColor"], (colorResult) => {
+    const highlightColor = colorResult.highlightColor || "#ffeb3b"; // Default to yellow if no color set
 
-  chrome.storage.local.get(["highlights"], (result) => {
-    const highlights = result.highlights || [];
-    highlights.push(highlight);
-    chrome.storage.local.set({ highlights }, () => {
-      console.log("Highlight saved:", highlight);
-      // Add visual feedback
+    const highlight = {
+      text: text,
+      url: window.location.href,
+      timestamp: new Date().toISOString(),
+      id: Date.now().toString(),
+      color: highlightColor,
+    };
 
-      // Apply highlight to the current selection
-      const range = window.getSelection().getRangeAt(0);
-      const span = document.createElement("span");
-      span.className = "highlighted-text";
-      span.dataset.id = highlight.id; // Store the ID on the span
-
-      try {
-        range.surroundContents(span);
-        loadHighlights();
-      } catch (e) {
-        console.error("Couldn't apply highlight:", e);
+    // save to storage
+    chrome.storage.local.get(["highlights"], (result) => {
+      const highlights = result.highlights || [];
+      const isHighlightExist = highlights.find(
+        (h) => h.text === text && h.url === window.location.href
+      );
+      if (isHighlightExist) {
+        showNotification("Already Exists!");
+        return;
       }
+
+      highlights.push(highlight);
+      chrome.storage.local.set({ highlights }, () => {
+        console.log("Highlight saved:", highlight);
+        // Only show notification after storage is updated
+        showNotification("Highlight saved!");
+      });
     });
   });
 }
 
 // Show saved notification
-function showSavedNotification() {
+function showNotification(text) {
   const notification = document.createElement("div");
   notification.id = "save-notification";
-  notification.textContent = "Highlight saved!";
+  notification.textContent = text;
   document.body.appendChild(notification);
 
   setTimeout(() => {
@@ -117,31 +186,53 @@ function showSavedNotification() {
   }, 2000);
 }
 
-// Apply highlight to text on the page
-function applyHighlight(text) {
-  const range = window.getSelection().getRangeAt(0);
-  const span = document.createElement("span");
-  span.className = "highlighted-text";
-  range.surroundContents(span);
-}
-
-// Load highlights on page load
 function loadHighlights() {
   chrome.storage.local.get(["highlights"], (result) => {
     const highlights = result.highlights || [];
     const currentUrl = window.location.href;
 
-    highlights.forEach((highlight) => {
-      if (highlight.url === currentUrl) {
-        // Apply highlights to the page
-        const regex = new RegExp(highlight.text, "g");
-        document.body.innerHTML = document.body.innerHTML.replace(
-          regex,
-          `<span class="highlighted-text" data-id="${highlight.id}">${highlight.text}</span>`
-        );
+    console.log("HHHH", highlights);
+
+    // Filter highlights for the current page
+    const pageHighlights = highlights.filter((h) => h.url === currentUrl);
+
+    if (pageHighlights.length === 0) return;
+
+    console.log(`Found ${pageHighlights.length} highlights for this page`);
+
+    // Process each highlight
+    pageHighlights.forEach((highlight) => {
+      // Skip if already highlighted
+      if (
+        document.querySelector(`.highlighted-text[data-id="${highlight.id}"]`)
+      ) {
+        return;
       }
+
+      const text = highlight.text.trim();
+      if (!text) return;
+
+      console.log(`Trying to apply highlight: ${text.substring(0, 30)}...`);
     });
   });
 }
 
+// Load highlights on page load
 loadHighlights();
+
+// Also reload highlights when the DOM changes significantly
+const observer = new MutationObserver(function (mutations) {
+  // Debounce the loadHighlights call
+  if (observer.timeout) {
+    clearTimeout(observer.timeout);
+  }
+  observer.timeout = setTimeout(loadHighlights, 1000);
+});
+
+// Start observing the document for significant changes
+observer.observe(document.body, {
+  childList: true,
+  subtree: true,
+  characterData: false,
+  attributes: false,
+});
